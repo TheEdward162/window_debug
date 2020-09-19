@@ -1,4 +1,4 @@
-use std::num::NonZeroIsize;
+use std::num::{NonZeroIsize, NonZeroUsize};
 
 pub const GLYPH_WIDTH: usize = 8;
 pub const GLYPH_HEIGHT: usize = 16;
@@ -91,6 +91,11 @@ impl FontGlyph {
 			'7' => FontGlyph::NUM_7,
 			'8' => FontGlyph::NUM_8,
 			'9' => FontGlyph::NUM_9,
+
+			'F' => FontGlyph::F,
+
+			'x' => FontGlyph::X_LOW,
+			
 			_ => panic!("Char '{}' not implemented in the font", ch)
 		}
 	}
@@ -236,6 +241,38 @@ impl FontGlyph {
 			0b01111100,
 		]
 	);
+
+	// Uppercase letters
+	pub const F: FontGlyph = FontGlyph::new_fit_xheight(
+		[
+			0b11111110,
+			0b01100110,
+			0b01100000,
+			0b01100100,
+			0b01111100,
+			0b01100100,
+			0b01100000,
+			0b01100000,
+			0b01100000,
+			0b11110000
+		]
+	);
+
+	// Lowercase letters
+	pub const X_LOW: FontGlyph = FontGlyph::new_fit_xheight(
+		[
+			0b00000000,
+			0b00000000,
+			0b00000000,
+			0b11000110,
+			0b11000110,
+			0b01101100,
+			0b00111000,
+			0b01101100,
+			0b11000110,
+			0b11000110,
+		]
+	);
 }
 impl std::fmt::Debug for FontGlyph {
 	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -293,6 +330,30 @@ impl WorldFontGlyph {
 	}
 }
 
+/// Computes maximu glyph size for the specified glyph count
+pub fn compute_glyph_scale(
+	bounds: (usize, usize),
+	glyph_count: NonZeroUsize,
+	line_count: NonZeroUsize
+) -> NonZeroIsize {
+	let width = glyph_count.get() * GLYPH_WIDTH;
+	let height = line_count.get() * GLYPH_HEIGHT;
+
+	// perform flooring ln2 to gain power-of-two scaling for width and height
+	let width_scale = 0usize.leading_zeros() - (bounds.0 / width).leading_zeros();
+	let height_scale = 0usize.leading_zeros() - (bounds.1 / height).leading_zeros();
+	
+	let min_scale = std::cmp::min(width_scale, height_scale);
+	
+	let scale = if min_scale > 0 {
+		1isize << (min_scale - 1)
+	} else {
+		1isize
+	};
+
+	std::num::NonZeroIsize::new(scale).unwrap()
+}
+
 pub struct TextLine {
 	glyphs: Vec<WorldFontGlyph>,
 	bounding_box: [isize; 4]
@@ -328,6 +389,13 @@ impl TextLine {
 		TextLine {
 			glyphs,
 			bounding_box
+		}
+	}
+
+	pub const fn empty() -> Self {
+		TextLine {
+			glyphs: Vec::new(),
+			bounding_box: [0, -1, 0, -1]
 		}
 	}
 

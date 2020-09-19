@@ -4,5 +4,8 @@ version = "0.1.0"
 authors = ["edward"]
 edition = "2018"
 
+[features]
+centered_text = []
+
 [dependencies]
 minifb = "0.19"
