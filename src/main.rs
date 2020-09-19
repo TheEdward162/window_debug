@@ -98,6 +98,24 @@ fn open_window(color: Color, window_options: WindowOptions, title_override: Opti
 	while window.is_open() {
 		window.update();
 
+		let mut kill_keys_pressed = 0b00;
+		window.get_keys().map(|keys| {
+			for key in keys {
+				match key {
+					minifb::Key::Q => {
+						kill_keys_pressed |= 0b01;
+					}
+					minifb::Key::LeftShift | minifb::Key::RightShift => {
+						kill_keys_pressed |= 0b10;
+					}
+					_ => ()
+				}
+			}
+		});
+		if kill_keys_pressed == 0b11 {
+			break;
+		}
+
 		let current_size = window.get_size();
 		if current_size != size {
 			size = current_size;
