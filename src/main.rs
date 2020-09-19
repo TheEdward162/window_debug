@@ -1,83 +1,26 @@
-use std::time::SystemTime;
 use std::convert::TryInto;
 
 use minifb::{Window, WindowOptions};
 
 mod font;
+mod cli;
 
 use font::TextLine;
-
-static COLOR_PRESETS: [Color; 12] = [
-	Color::new_hex(0xFF0000, 0x000000, Some("Red")),
-	Color::new_hex(0xFF8000, 0x000000, Some("Orange")),
-	Color::new_hex(0xFFFF00, 0x000000, Some("Yellow")),
-	Color::new_hex(0x00FF80, 0x000000, Some("Light green")),
-	Color::new_hex(0x00FF00, 0x000000, Some("Green")),
-	Color::new_hex(0x00B300, 0x000000, Some("Dark green")),
-	Color::new_hex(0x00FFFF, 0x000000, Some("Cyan")),
-	Color::new_hex(0x0000FF, 0x000000, Some("Blue")),
-	Color::new_hex(0x0000B3, 0x000000, Some("Dark blue")),
-	Color::new_hex(0x8000FF, 0x000000, Some("Purpleish blue")),
-	Color::new_hex(0xFF00FF, 0x000000, Some("Purple")),
-	Color::new_hex(0xE6003A, 0x000000, Some("Pink")),
-];
-
-#[derive(Debug, Clone, Copy)]
-struct Color {
-	pub background: u32,
-	pub foreground: u32,
-	pub name: Option<&'static str>
-}
-impl Color {
-	pub const fn new_hex(
-		background: u32,
-		foreground: u32,
-		name: Option<&'static str>
-	) -> Self {
-		Color {
-			background,
-			foreground,
-			name
-		}
-	}
-}
-impl std::fmt::Display for Color {
-	fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-		match self.name {
-			Some(name) => write!(f, "{}", name),
-			None => write!(f, "#{:0>6X}", self.background)
-		}
-	}
-}
+use cli::Color;
 
 fn main() {
-	let mut args = std::env::args();
-	args.next(); // skip exec name
-	
-	let color = args.next().and_then(|arg| {
-		if arg.starts_with("#") {
-			u32::from_str_radix(&arg[1..], 16).ok().map(|bg| Color::new_hex(bg, 0x000000, None))
-		} else {
-			usize::from_str_radix(&arg, 10).ok().map(|index| COLOR_PRESETS[index % COLOR_PRESETS.len()])
-		}
-	}).unwrap_or_else(
-		|| {
-			let time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap();
-
-			let md = COLOR_PRESETS.len() as u64;
-			let index = (time.as_secs() % md + time.as_micros() as u64 % md) % md;
-			COLOR_PRESETS[index as usize]
-		}
-	);
+	let cli = cli::parse_cli();
 
 	open_window(
-		color,
+		cli.color,
 		WindowOptions {
-			borderless: true,
-			resize: true,
+			borderless: cli.borderless,
+			resize: cli.resize,
+			topmost: cli.topmost,
+			title: cli.title,
 			..WindowOptions::default()
 		},
-		None
+		cli.title_override.as_ref().map(|s| s.as_str())
 	);
 }
 
