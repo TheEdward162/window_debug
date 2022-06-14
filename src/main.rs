@@ -42,19 +42,17 @@ fn open_window(color: Color, window_options: WindowOptions, title_override: Opti
 		window.update();
 
 		let mut kill_keys_pressed = 0b00;
-		window.get_keys().map(|keys| {
-			for key in keys {
-				match key {
-					minifb::Key::Q => {
-						kill_keys_pressed |= 0b01;
-					}
-					minifb::Key::LeftShift | minifb::Key::RightShift => {
-						kill_keys_pressed |= 0b10;
-					}
-					_ => ()
+		for key in window.get_keys() {
+			match key {
+				minifb::Key::Q => {
+					kill_keys_pressed |= 0b01;
 				}
+				minifb::Key::LeftShift | minifb::Key::RightShift => {
+					kill_keys_pressed |= 0b10;
+				}
+				_ => ()
 			}
-		});
+		}
 		if kill_keys_pressed == 0b11 {
 			break;
 		}

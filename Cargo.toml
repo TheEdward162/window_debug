@@ -2,10 +2,10 @@
 name = "window_debug"
 version = "0.1.0"
 authors = ["edward"]
-edition = "2018"
+edition = "2021"
 
 [features]
 centered_text = []
 
 [dependencies]
-minifb = "0.19"
+minifb = { version = "0.23", default-features = false, features = ["wayland", "dlopen"] }
